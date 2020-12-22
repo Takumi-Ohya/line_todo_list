@@ -19,7 +19,17 @@ class LineBotController < ApplicationController
     events.each do |event|
       # LINE からテキストが送信された場合
       if (event.type === Line::Bot::Event::MessageType::Text)
-        # LINE からテキストが送信されたときの処理を記述する
+        message = event["message"]["text"]
+
+        # 送信されたメッセージをDBに保存する
+        Task.create(body: message)
+        binding.pry
+
+        reply_message = {
+          type: "text",
+          text: "タスク：「#{message}」を登録しました" #LINEに返すメッセージ
+        }
+        client.reply_message(event["replyToken"], reply_message)
       end
     end
 
