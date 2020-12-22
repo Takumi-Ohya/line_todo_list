@@ -21,13 +21,24 @@ class LineBotController < ApplicationController
       if (event.type === Line::Bot::Event::MessageType::Text)
         message = event["message"]["text"]
 
-        # 送信されたメッセージをDBに保存する
-        Task.create(body: message)
-        binding.pry
+        #メッセージの内容による条件分岐(createかdestroyかshowか)
+        if (message == "いちらん")
+          text1 =
+            Task.all.map do |task|
+              "#{task.id}.#{task.body}"
+            end
+          text2 = text1.join("\n")
 
+
+        else
+          # 送信されたメッセージをDBに保存する
+          Task.create(body: message)
+          #binding.pry
+          text2 = "タスク：「#{message}」を登録しました"
+        end
         reply_message = {
-          type: "text",
-          text: "タスク：「#{message}」を登録しました" #LINEに返すメッセージ
+           type: "text",
+          text: text2 #LINEに返すメッセージ
         }
         client.reply_message(event["replyToken"], reply_message)
       end
