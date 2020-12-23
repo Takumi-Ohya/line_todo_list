@@ -21,26 +21,64 @@ class LineBotController < ApplicationController
       if (event.type === Line::Bot::Event::MessageType::Text)
         message = event["message"]["text"]
 
-        #メッセージの内容による条件分岐(createかdestroyかshowか)
+        # タスクの一覧を表示させたい場合
         if (message == "いちらん")
           text1 =
             Task.all.map do |task|
               "#{task.id}.#{task.body}"
             end
           text2 = text1.join("\n")
+          reply_message = {
+            type: "text",
+           text: text2
+         }
+         client.reply_message(event["replyToken"], reply_message)
+
+        # タスクを削除したい場合
+        # LINEからのメッセージ
+        elsif (message == "さくじょ")
+          text1 =
+            Task.all.map do |task|
+              "#{task.id}.#{task.body}"
+            end
+          text2 = text1.join("\n")
+          reply_message = {
+            type: "text",
+           text: text2
+         }
+         client.reply_message(event["replyToken"], reply_message)
+         reply_message = {
+           type: "text"
+           text: "削除するタスクの番号を選択してください"
+         }
+         client.reply_message(event["replyToken"], reply_message)
+
+         # 削除するタスクを選択
+         body = request.body.read
+         events = client.parse_events_from(body)
+         events.each do |event|
+            # LINE からテキストが送信された場合
+            if (event.type === Line::Bot::Event::MessageType::Text)
+              message = event["message"]["text"]
+              erase_id = message.to_i
+
+            end
+         end
 
 
+        # タスクを作成したい場合
         else
           # 送信されたメッセージをDBに保存する
           Task.create(body: message)
           #binding.pry
           text2 = "タスク：「#{message}」を登録しました"
+          reply_message = {
+            type: "text",
+           text: text2
+         }
+         client.reply_message(event["replyToken"], reply_message)
         end
-        reply_message = {
-           type: "text",
-          text: text2 #LINEに返すメッセージ
-        }
-        client.reply_message(event["replyToken"], reply_message)
+
       end
     end
 
