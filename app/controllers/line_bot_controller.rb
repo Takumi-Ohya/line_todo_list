@@ -22,7 +22,9 @@ class LineBotController < ApplicationController
         message = event["message"]["text"]
 
         # タスクの一覧を表示させたい場合
-        if (message == "いちらん")
+        text =
+        case message
+        when "いちらん"
           text1 =
             Task.all.map do |task|
               "#{task.id}.#{task.body}"
@@ -34,39 +36,20 @@ class LineBotController < ApplicationController
          }
          client.reply_message(event["replyToken"], reply_message)
 
-        # タスクを削除したい場合
-        # LINEからのメッセージ
-        elsif (message == "さくじょ")
-          text1 =
-            Task.all.map do |task|
-              "#{task.id}.#{task.body}"
-            end
-          text2 = text1.join("\n")
+         # タスクを削除したい場合
+
+        when /さくじょ+\d/
+
+          id = message.gsub(/さくじょ/, "").strip.to_i
+          task = Task.find(id)
+          task.destroy!
           reply_message = {
             type: "text",
-           text: text2
-         }
-         client.reply_message(event["replyToken"], reply_message)
-         reply_message = {
-           type: "text"
-           text: "削除するタスクの番号を選択してください"
-         }
-         client.reply_message(event["replyToken"], reply_message)
+            text: "タスク #{id}: 「#{task.body}」 を削除しました"
+          }
+          client.reply_message(event["replyToken"], reply_message)
 
-         # 削除するタスクを選択
-         body = request.body.read
-         events = client.parse_events_from(body)
-         events.each do |event|
-            # LINE からテキストが送信された場合
-            if (event.type === Line::Bot::Event::MessageType::Text)
-              message = event["message"]["text"]
-              erase_id = message.to_i
-
-            end
-         end
-
-
-        # タスクを作成したい場合
+          # タスクを作成したい場合
         else
           # 送信されたメッセージをDBに保存する
           Task.create(body: message)
